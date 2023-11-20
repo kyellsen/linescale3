@@ -5,8 +5,6 @@ import pandas as pd
 from .base_class import BaseClass
 from .measurement import Measurement
 
-from ..plotting import plot_sensor as plt
-
 from kj_core import get_logger
 
 logger = get_logger(__name__)
@@ -132,10 +130,26 @@ class Sensor(BaseClass):
         self._metadata_df = df
 
     def plot_force_vs_time(self):
-        try:
-            plt.plot_force_vs_time(self)
-        except Exception as e:
-            logger.error(f"{self} failed to plot force versus time. Error: {e}")
+        """
+        Plots the measurements.
+
+        Parameters
+        ----------
+        sensor
+        """
+        for measurement in self.measurements:
+            measurement.plot_force_vs_time()
+
+    def plot_force_vs_time_with_max_and_release(self):
+        """
+        Plots the measurements.
+
+        Parameters
+        ----------
+        sensor
+        """
+        for measurement in self.measurements:
+            measurement.plot_force_vs_time_with_max_and_release()
 
     def df_x_experiment(self, experiment_df: pd.DataFrame, cols_to_merge: List[str], sensor_id_col: str) \
             -> Optional[pd.DataFrame]:

@@ -5,8 +5,6 @@ import pandas as pd
 from .base_class import BaseClass
 from .sensor import Sensor
 
-from ..plotting import plot_series as plt_s
-
 from kj_core import get_logger
 logger = get_logger(__name__)
 
@@ -174,4 +172,25 @@ class Series(BaseClass):
         return self.metadata_df
 
     def plot_force_vs_time(self):
-        plt_s.plot_force_vs_time(self)
+        """
+        Plots the measurements for each sensor.
+
+        Parameters
+        ----------
+        series
+        """
+
+        for sensor in self.sensors:
+            sensor.plot_force_vs_time()
+
+    def plot_force_vs_time_with_max_and_release(self):
+        """
+        Plots the measurements for each sensor.
+
+        Parameters
+        ----------
+        series
+        """
+
+        for sensor in self.sensors:
+            sensor.plot_force_vs_time_with_max_and_release()

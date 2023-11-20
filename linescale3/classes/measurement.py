@@ -5,9 +5,10 @@ import pandas as pd
 
 from .base_class import BaseClass
 
-from ..plotting import plot_measurement as plt
+from ..plotting import plot_measurement
 
 from kj_core import get_logger
+
 logger = get_logger(__name__)
 
 
@@ -232,7 +233,8 @@ class Measurement(BaseClass):
 
         return self._full_metadata
 
-    def get_release_force(self, min_force: float = 1, window_sec: int = 5, distance_to_end_sec: int = 3) -> Optional[float]:
+    def get_release_force(self, min_force: float = 1, window_sec: int = 5, distance_to_end_sec: int = 3) -> Optional[
+        float]:
         """
         Method to calculate release force.
 
@@ -268,17 +270,36 @@ class Measurement(BaseClass):
         Method to plot force vs time.
         """
         try:
-            plt.plot_force_vs_time_with_max_and_release(self.PLOT_MANAGER, self)
+            fig = plot_measurement.plot_force_vs_time(
+                self.df,
+                self.sensor_id,
+                self.measurement_id,
+                self.measurement_name
+            )
+
+            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{measurement_name}_{measurement_id}",
+                                        subdir="force_vs_time")
+
             logger.info(f"plot_force_vs_time for measurement: '{self}'.")
         except Exception as e:
             logger.error(f"Failed to plot plot_force_vs_time: '{self}'. Error: {e}")
 
     def plot_force_vs_time_with_max_and_release(self):
         """
-        Method to plot force vs time.
+        Method to plot force vs time with maximum and release force.
         """
         try:
-            plt.plot_force_vs_time_with_max_and_release(self.PLOT_MANAGER, self)
+            fig = plot_measurement.plot_force_vs_time_with_max_and_release(
+                self.df,
+                self.sensor_id,
+                self.measurement_id,
+                self.measurement_name,
+                self.force_metadata['max'],
+                self.force_metadata['release']
+            )
+            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{measurement_name}_{measurement_id}",
+                                        subdir="force_vs_time_with_max_and_release")
+
             logger.info(f"plot_force_vs_time_with_max_and_release for measurement: '{self}'.")
         except Exception as e:
             logger.error(f"Failed to plot_force_vs_time_with_max_and_release for measurement: '{self}'. Error: {e}")
