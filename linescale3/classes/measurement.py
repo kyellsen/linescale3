@@ -297,7 +297,7 @@ class Measurement(BaseClass):
                 self.force_metadata['max'],
                 self.force_metadata['release']
             )
-            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{measurement_name}_{measurement_id}",
+            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{self.measurement_name}_{self.measurement_id}",
                                         subdir="force_vs_time_with_max_and_release")
 
             logger.info(f"plot_force_vs_time_with_max_and_release for measurement: '{self}'.")
