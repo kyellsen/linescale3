@@ -277,7 +277,7 @@ class Measurement(BaseClass):
                 self.measurement_name
             )
 
-            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{measurement_name}_{measurement_id}",
+            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{self.measurement_name}_{self.measurement_id}",
                                         subdir="force_vs_time")
 
             logger.info(f"plot_force_vs_time for measurement: '{self}'.")
