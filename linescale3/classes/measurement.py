@@ -169,12 +169,12 @@ class Measurement(BaseClass):
             attributes = self.CONFIG.time_metadata_cols
 
             if 'datetime_start' in attributes:
-                self._time_metadata['datetime_start'] = self.df.datetime.min_value()
+                self._time_metadata['datetime_start'] = self.df.datetime.min()
             if 'datetime_end' in attributes:
-                self._time_metadata['datetime_end'] = self.df.datetime.max_value()
+                self._time_metadata['datetime_end'] = self.df.datetime.max()
             if 'duration' in attributes:
-                start = self.df.datetime.min_value()
-                end = self.df.datetime.max_value()
+                start = self.df.datetime.min()
+                end = self.df.datetime.max()
                 self._time_metadata['duration'] = (end - start).total_seconds()
             if 'length' in attributes:
                 self._time_metadata['length'] = len(self.df)
