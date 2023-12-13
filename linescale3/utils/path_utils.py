@@ -1,4 +1,4 @@
-# linescale3/utils/path_utils.py
+# linescale3/tms_csv/path_utils.py
 
 from pathlib import Path
 
