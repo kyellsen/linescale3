@@ -1,17 +1,25 @@
 from kj_core import get_logger
-
 import linescale3
 
 logger = get_logger(__name__)
 
 
-class BaseClass:
-    """
-    Base class built upon CoreBaseClass, using specific managers from treemotion.
-    """
+class BaseClass():
+    __abstract__ = True
+    _config = None
+    _plot_manager = None
 
     def __init__(self):
-        self.CONFIG = linescale3.CONFIG
-        self.PLOT_MANAGER = linescale3.PLOT_MANAGER
+        super().__init__()
 
+    @property
+    def CONFIG(self):
+        if self._config is None:
+            self._config = linescale3.CONFIG
+        return self._config
 
+    @property
+    def PLOT_MANAGER(self):
+        if self._plot_manager is None:
+            self._plot_manager = linescale3.PLOT_MANAGER
+        return self._plot_manager
