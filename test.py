@@ -1,3 +1,6 @@
 import linescale3 as ls3
 
-print(ls3.Series)
+working_directory = str()
+
+CONFIG, LOG_MANAGER, PLOT_MANAGER = ls3.setup(working_directory)
+
