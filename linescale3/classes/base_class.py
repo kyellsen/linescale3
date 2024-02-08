@@ -16,10 +16,18 @@ class BaseClass():
     def CONFIG(self):
         if self._config is None:
             self._config = linescale3.CONFIG
-        return self._config
+        return self._config  # TODO: Try to delete
 
     @property
     def PLOT_MANAGER(self):
         if self._plot_manager is None:
             self._plot_manager = linescale3.PLOT_MANAGER
-        return self._plot_manager
+        return self._plot_manager  # TODO: Try to delete
+
+    @classmethod
+    def get_config(cls):
+        return treemotion.CONFIG
+
+    @classmethod
+    def get_plot_manager(cls):
+        return treemotion.PLOT_MANAGER
