@@ -38,3 +38,32 @@ def setup(working_directory: Optional[str] = None, log_level: str = "info",
     logger.info(f"{name_s}: {name} setup completed.")
 
     return CONFIG, LOG_MANAGER, PLOT_MANAGER
+
+
+def help():
+    """
+    Provides detailed guidance on setting up and using the linescale3 package.
+
+    Setup:
+        The setup function initializes the linescale3 package with user-defined settings.
+        It configures logging, plotting, and the operational environment for data analysis.
+
+        Example Usage:
+            config, log_manager, plot_manager = setup('/path/to/directory', 'debug', safe_logs_to_file=True)
+
+    Main Components:
+        Series:
+            Represents a sequence of measurements as a time series.
+
+        Sensor:
+            Defines a sensor used in experiments, containing metadata and calibration info.
+
+        Measurement:
+            Represents a single measurement event with associated data and metadata.
+
+    Further Information:
+        For detailed API documentation, usage examples, and more, refer to the package documentation or visit the GitHub repository.
+    """
+    print(help.__doc__)
+
+
