@@ -53,10 +53,10 @@ def help():
 
     Main Components:
         Series:
-            Represents a sequence of measurements as a time series.
+            Represents a sequence of measurements.
 
         Sensor:
-            Defines a sensor used in experiments, containing metadata and calibration info.
+            Defines a sensor used in experiments, containing metadata.
 
         Measurement:
             Represents a single measurement event with associated data and metadata.

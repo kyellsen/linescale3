@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, Tuple
 import numpy as np
 import pandas as pd
 
@@ -233,24 +233,51 @@ class Measurement(BaseClass):
 
         return self._full_metadata
 
-    def get_release_force(self, min_force: float = 1, window_sec: int = 5, distance_to_end_sec: int = 3) -> Optional[
-        float]:
+    def plot_force_vs_time(self):
         """
-        Method to calculate release force.
+        Method to plot force vs time.
+        """
+        try:
+            fig = plot_measurement.plot_force_vs_time(
+                self.df,
+                self.sensor_id,
+                self.measurement_id,
+                self.force_metadata['max']
+            )
+
+            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{self.measurement_name}_{self.measurement_id}",
+                                        subdir="force_vs_time")
+
+            logger.info(f"plot_force_vs_time for measurement: '{self}'.")
+        except Exception as e:
+            logger.error(f"Failed to plot plot_force_vs_time: '{self}'. Error: {e}")
+
+    def get_release_force(self, min_force: float = 1, window_sec: int = 5, distance_to_end_sec: int = 3) -> Optional[float]:
+        """
+        Calculate the mean release force from the force data and provide the window for plotting.
+
+        This method identifies and calculates the average release force
+        within a specified time window before the end of the measurement.
 
         Parameters
         ----------
-        min_force : float
-            Minimum force
-        window_sec : int
-            Time window in seconds
-        distance_to_end_sec : int
-            Distance to the end in seconds
+        min_force : float, optional
+            The minimum force threshold to be considered (default is 1).
+        window_sec : int, optional
+            The duration of the time window in seconds within which the force
+            is averaged (default is 5 seconds).
+        distance_to_end_sec : int, optional
+            The duration in seconds from the end of the measurement to
+            the start of the averaging window (default is 3 seconds).
 
         Returns
         -------
-        float
-            Mean release force
+        Optional[float]
+
+        Raises
+        ------
+        Exception
+            If the calculation of the release force fails, an error message is logged and None is returned.
         """
         try:
             force = self.df.force
@@ -265,25 +292,6 @@ class Measurement(BaseClass):
             logger.error(f"Failed to calculate release force for measurement: '{self.measurement_name}'. Error: {e}")
             return None
 
-    def plot_force_vs_time(self):
-        """
-        Method to plot force vs time.
-        """
-        try:
-            fig = plot_measurement.plot_force_vs_time(
-                self.df,
-                self.sensor_id,
-                self.measurement_id,
-                self.measurement_name
-            )
-
-            self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{self.measurement_name}_{self.measurement_id}",
-                                        subdir="force_vs_time")
-
-            logger.info(f"plot_force_vs_time for measurement: '{self}'.")
-        except Exception as e:
-            logger.error(f"Failed to plot plot_force_vs_time: '{self}'. Error: {e}")
-
     def plot_force_vs_time_with_max_and_release(self):
         """
         Method to plot force vs time with maximum and release force.
@@ -293,9 +301,8 @@ class Measurement(BaseClass):
                 self.df,
                 self.sensor_id,
                 self.measurement_id,
-                self.measurement_name,
                 self.force_metadata['max'],
-                self.force_metadata['release']
+                self.force_metadata['release'],
             )
             self.PLOT_MANAGER.save_plot(fig, filename=f"f_vs_t_{self.measurement_name}_{self.measurement_id}",
                                         subdir="force_vs_time_with_max_and_release")
