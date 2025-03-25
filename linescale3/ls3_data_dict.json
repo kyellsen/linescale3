@@ -1,0 +1,130 @@
+{
+    "measurement_name": {
+        "Kategorie": "ls3_metadata",
+        "Zeichen": "filename",
+        "Deutsch": "Dateiname",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "Name der Log-Datei bzw. Serienbezeichnung der Messung"
+    },
+    "sensor_id": {
+        "Kategorie": "ls3",
+        "Zeichen": "sensor_id",
+        "Deutsch": "Sensor-ID",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "ID der LineScale (Seriennummer)"
+    },
+    "measurement_id": {
+        "Kategorie": "ls3",
+        "Zeichen": "$ID_{\\mathrm{Log}}$",
+        "Deutsch": "Log-Nummer",
+        "Datentyp": "Int64",
+        "Einheit": "-",
+        "Beschreibung": "Mess-ID (interne Laufnummer der LineScale)"
+    },
+    "datetime": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{raw}}$",
+        "Deutsch": "Zeitstempel",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "Startzeitpunkt der Messung laut Gerät"
+    },
+    "unit": {
+        "Kategorie": "ls3",
+        "Zeichen": "unit",
+        "Deutsch": "Einheit",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "Einheit der Kraftmessung (i. R. kN)"
+    },
+    "mode": {
+        "Kategorie": "ls3",
+        "Zeichen": "mode",
+        "Deutsch": "Modus",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "Messmodus, z. B. abs für absolute Kraft"
+    },
+    "speed": {
+        "Kategorie": "ls3",
+        "Zeichen": "$f$",
+        "Deutsch": "Abtastrate",
+        "Datentyp": "Int64",
+        "Einheit": "Hz",
+        "Beschreibung": "Messgeschwindigkeit in Hz"
+    },
+    "trig": {
+        "Kategorie": "ls3",
+        "Zeichen": "$F_{\\mathrm{trig}}$",
+        "Deutsch": "Triggerkraft",
+        "Datentyp": "float64",
+        "Einheit": "kN",
+        "Beschreibung": "Mindestkraft für Messbeginn"
+    },
+    "pre": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{pre}}$",
+        "Deutsch": "Vorlaufzeit",
+        "Datentyp": "Int64",
+        "Einheit": "s",
+        "Beschreibung": "Nachträglich ergänzter Zeitraum vor Trigger"
+    },
+    "catch": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{catch}}$",
+        "Deutsch": "Aufzeichnungszeit",
+        "Datentyp": "Int64",
+        "Einheit": "s",
+        "Beschreibung": "Dauer der Datenerfassung nach Trigger"
+    },
+    "timing_correction_factor": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{corr}}$",
+        "Deutsch": "Zeitkorrekturfaktor",
+        "Datentyp": "float64",
+        "Einheit": "-",
+        "Beschreibung": "Korrekturfaktor für Zeit- und Dauerangaben (z. B. 0.9)"
+    },
+    "duration": {
+        "Kategorie": "ls3",
+        "Zeichen": "$\\Delta t$",
+        "Deutsch": "Messdauer",
+        "Datentyp": "float64",
+        "Einheit": "s",
+        "Beschreibung": "Gesamtdauer der Messung"
+    },
+    "length": {
+        "Kategorie": "ls3",
+        "Zeichen": "$n$",
+        "Deutsch": "Anzahl Messpunkte",
+        "Datentyp": "Int64",
+        "Einheit": "-",
+        "Beschreibung": "Anzahl erfasster Datenpunkte"
+    },
+    "mean": {
+        "Kategorie": "ls3",
+        "Zeichen": "$\\bar{F}$",
+        "Deutsch": "Mittlere Kraft",
+        "Datentyp": "float64",
+        "Einheit": "kN",
+        "Beschreibung": "Arithmetisches Mittel der gemessenen Kraft"
+    },
+    "median": {
+        "Kategorie": "ls3",
+        "Zeichen": "$F_{\\mathrm{median}}$",
+        "Deutsch": "Median Kraft",
+        "Datentyp": "float64",
+        "Einheit": "kN",
+        "Beschreibung": "Median der gemessenen Kraft"
+    },
+    "release": {
+        "Kategorie": "ls3",
+        "Zeichen": "$F_{\\mathrm{release}}$",
+        "Deutsch": "Vorspannkraft Ist",
+        "Datentyp": "float64",
+        "Einheit": "kN",
+        "Beschreibung": "Gemittelte Kraft 3–8 Sekunden vor Messende (nur Zugseil)"
+    }
+}
