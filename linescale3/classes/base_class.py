@@ -26,8 +26,8 @@ class BaseClass():
 
     @classmethod
     def get_config(cls):
-        return treemotion.CONFIG
+        return linescale3.CONFIG
 
     @classmethod
     def get_plot_manager(cls):
-        return treemotion.PLOT_MANAGER
+        return linescale3.PLOT_MANAGER

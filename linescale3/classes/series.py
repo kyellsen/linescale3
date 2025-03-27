@@ -92,31 +92,11 @@ class Series(BaseClass):
     def metadata_df(self, df):
         self._metadata_df = df
 
-    @staticmethod
-    def create_data_dict() -> Dict[str, dict]:
+    def create_data_dict(self) -> Dict[str, dict]:
         """
-        Loads and returns the LS3 metadata data dictionary from JSON.
-
-        Returns
-        -------
-        Dict[str, dict]
-            Data dictionary mapping column names to their metadata description.
+        Always returns the freshest version of the label dictionary from JSON.
         """
-        try:
-            json_path = Path(__file__).parent.parent / "ls3_data_dict.json"
-            if not json_path.exists():
-                logger.warning(f"Data dictionary not found at: {json_path}")
-                return {}
-
-            with open(json_path, "r", encoding="utf-8") as f:
-                data_dict = json.load(f)
-
-            logger.info(f"Data dictionary loaded with {len(data_dict)} entries.")
-            return data_dict
-
-        except Exception as e:
-            logger.error(f"Error loading data dictionary: {e}")
-            return {}
+        return self.get_config().load_label_dict()
 
     def plot_force_vs_time(self):
         """

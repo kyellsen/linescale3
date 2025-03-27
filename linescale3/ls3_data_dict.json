@@ -1,6 +1,6 @@
 {
     "measurement_name": {
-        "Kategorie": "ls3_metadata",
+        "Kategorie": "ls3",
         "Zeichen": "filename",
         "Deutsch": "Dateiname",
         "Datentyp": "object",
@@ -9,23 +9,23 @@
     },
     "sensor_id": {
         "Kategorie": "ls3",
-        "Zeichen": "sensor_id",
-        "Deutsch": "Sensor-ID",
+        "Zeichen": "sensor\\_id",
+        "Deutsch": "Sensor ID",
         "Datentyp": "object",
         "Einheit": "-",
-        "Beschreibung": "ID der LineScale (Seriennummer)"
+        "Beschreibung": "ID des LineScale3 (Seriennummer)"
     },
     "measurement_id": {
         "Kategorie": "ls3",
         "Zeichen": "$ID_{\\mathrm{Log}}$",
-        "Deutsch": "Log-Nummer",
+        "Deutsch": "LogNr.",
         "Datentyp": "Int64",
         "Einheit": "-",
-        "Beschreibung": "Mess-ID (interne Laufnummer der LineScale)"
+        "Beschreibung": "Mess-ID (interne LogNr. der LS3)"
     },
     "datetime": {
         "Kategorie": "ls3",
-        "Zeichen": "$t_{\\mathrm{raw}}$",
+        "Zeichen": "$t$",
         "Deutsch": "Zeitstempel",
         "Datentyp": "object",
         "Einheit": "-",
@@ -37,7 +37,7 @@
         "Deutsch": "Einheit",
         "Datentyp": "object",
         "Einheit": "-",
-        "Beschreibung": "Einheit der Kraftmessung (i. R. kN)"
+        "Beschreibung": "Einheit der Kraftmessung (hier kN)"
     },
     "mode": {
         "Kategorie": "ls3",
@@ -45,7 +45,7 @@
         "Deutsch": "Modus",
         "Datentyp": "object",
         "Einheit": "-",
-        "Beschreibung": "Messmodus, z. B. abs für absolute Kraft"
+        "Beschreibung": "Messmodus, hier ABS für absolute Kraft"
     },
     "speed": {
         "Kategorie": "ls3",
@@ -125,6 +125,62 @@
         "Deutsch": "Vorspannkraft Ist",
         "Datentyp": "float64",
         "Einheit": "kN",
-        "Beschreibung": "Gemittelte Kraft 3–8 Sekunden vor Messende (nur Zugseil)"
+        "Beschreibung": "Tatsächlich realisierte Vorspannkraft im Zugseil bei Release"
+    },
+    "datetime_start": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{start}}$",
+        "Deutsch": "Startzeitpunkt",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "Berechneter Startzeitpunkt der Messung"
+    },
+    "datetime_end": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{end}}$",
+        "Deutsch": "Endzeitpunkt",
+        "Datentyp": "object",
+        "Einheit": "-",
+        "Beschreibung": "Berechneter Endzeitpunkt der Messung"
+    },
+    "max": {
+        "Kategorie": "ls3",
+        "Zeichen": "$F_{\\mathrm{max}}$",
+        "Deutsch": "Kraftmaximum",
+        "Datentyp": "object",
+        "Einheit": "kN",
+        "Beschreibung": "Index und Wert der maximalen Kraft"
+    },
+    "min": {
+        "Kategorie": "ls3",
+        "Zeichen": "$F_{\\mathrm{min}}$",
+        "Deutsch": "Kraftminimum",
+        "Datentyp": "object",
+        "Einheit": "kN",
+        "Beschreibung": "Index und Wert der minimalen Kraft"
+    },
+    "rel_zero": {
+        "Kategorie": "ls3",
+        "Zeichen": "rel\\_zero",
+        "Deutsch": "Nullpunkt relativ",
+        "Datentyp": "float64",
+        "Einheit": "-",
+        "Beschreibung": "Für ABS-Modus nicht relevant (hier NaN)"
+    },
+    "stop": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{stop}}$",
+        "Deutsch": "Stopp-Kriterium",
+        "Datentyp": "float64",
+        "Einheit": "s",
+        "Beschreibung": "Zeitpunkt der Beendigung der Messung (fixe Dauer bei KS)"
+    },
+    "total": {
+        "Kategorie": "ls3",
+        "Zeichen": "$t_{\\mathrm{total}}$",
+        "Deutsch": "Messzeitraum gesamt",
+        "Datentyp": "Int64",
+        "Einheit": "s",
+        "Beschreibung": "Gesamtlänge der Messung inkl. Pre-Trigger-Phase"
     }
 }
