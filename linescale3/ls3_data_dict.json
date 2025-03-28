@@ -122,7 +122,7 @@
     "release": {
         "Kategorie": "ls3",
         "Zeichen": "$F_{\\mathrm{release}}$",
-        "Deutsch": "Vorspannkraft Ist",
+        "Deutsch": "Vorspannkraft-Ist",
         "Datentyp": "float64",
         "Einheit": "kN",
         "Beschreibung": "Tatsächlich realisierte Vorspannkraft im Zugseil bei Release"
