@@ -1,152 +1,144 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Dict, Optional, Any, Callable
 import pandas as pd
 
 from .base_class import BaseClass
 from .measurement import Measurement
 
 from kj_logger import get_logger
-
 logger = get_logger(__name__)
 
 
 class Sensor(BaseClass):
     """
-    A class to represent a sensor.
+    Repräsentiert einen einzelnen Sensor mit mehreren Messungen.
 
-    Attributes:
-    -----------
+    Attributes
+    ----------
     name : str
-        Name of the sensor.
-    path : Path to the sensor.
-    measurement_files : List of measurement files associated with the sensor.
-    measurement_names : List of names of the measurements.
-    measurements : List of Measurement instances.
+        Sensor-Kennung (z. B. MAC-Adresse).
+    path : Path
+        Verzeichnis des Sensors, in dem Messdateien liegen.
+    measurements : List[Measurement]
+        Liste aller Measurement-Objekte dieses Sensors.
+    measurement_files : List[str]
+        Dateinamen der CSV-Messungen.
+    measurement_names : List[str]
+        Kurzbezeichnungen der Messungen.
     measurements_count : int
-        Count of the measurements associated with the sensor.
+        Anzahl der geladenen Messungen.
+
+    Properties
+    ----------
+    df_list : List[pd.DataFrame]
+        Liste der DataFrames einzelner Messungen.
     df : pd.DataFrame
-        a pandas DataFrame object
+        Kombinierter DataFrame aller Messungen.
     metadata_df : pd.DataFrame
-        a pandas DataFrame object
-
-    Properties:
-    -----------
-    df_list : List of dataframes of measurements.
-    df : pd.DataFrame
-        Combined dataframe of all measurements.
-
-    Methods:
-    --------
-    __str__() -> str
-        Returns the string representation of the Sensor instance.
-    plot_force_vs_time()
-        Plots force versus time for the measurements.
-    df_x_experiment(experiment_df: pd.DataFrame, cols_to_merge: List[str], sensor_id_col: str) -> pd.DataFrame:
-        Merges sensor data with experiment data and returns the updated sensor data.
-    metadata_x_experiment(experiment_df: pd.DataFrame, cols_to_merge: List[str], sensor_id_col: str) -> pd.DataFrame:
-        Merges sensor metadata with experiment data and returns the updated sensor metadata.
+        DataFrame der Metadaten aller Messungen.
     """
 
-    def __init__(self, name: str, path: Path):
-        """
-        Constructs all the necessary attributes for the Sensor object.
-
-        Parameters
-        ----------
-        name : str
-            Name of the sensor.
-        path : Path to the sensor.
-        """
+    def __init__(self, name: str, path: Path) -> None:
         super().__init__()
-
-        self.name = name
-        self.path = path
+        self.name: str = name
+        self.path: Path = path
         self.measurement_files: List[str] = []
         self.measurement_names: List[str] = []
         self.measurements: List[Measurement] = []
-        self._df_list = None
-        self._df = None
-        self._metadata_df = None
+        self.measurements_count: int = 0
+        self._df_list: Optional[List[pd.DataFrame]] = None
+        self._df: Optional[pd.DataFrame] = None
+        self._metadata_df: Optional[pd.DataFrame] = None
 
         try:
             csv_files = [f for f in self.path.glob("**/*.CSV") if f.is_file()]
             for csv_file in csv_files:
                 self.measurement_files.append(csv_file.name)
-                measurement_name = str(csv_file)[-28:-4].replace("\\", "_")
-                self.measurement_names.append(measurement_name)
-                measurement_inst = Measurement.read_csv(measurement_name, csv_file)
-                self.measurements.append(measurement_inst)
-
+                meas_name = csv_file.stem
+                self.measurement_names.append(meas_name)
+                inst = Measurement.read_csv(meas_name, csv_file)
+                if inst is not None:
+                    self.measurements.append(inst)
             self.measurements_count = len(self.measurement_files)
         except Exception as e:
-            logger.error(f"{name} failed to setup Sensor. Error: {e}")
+            logger.error(f"Sensor '{self.name}' setup failed: {e}")
             raise
 
+    def __repr__(self) -> str:
+        """
+        Detaillierte Repräsentation des Sensor-Objekts.
+        """
+        return (
+            f"<Sensor '{self.name}'>\n"
+            f"  Pfad:      {self.path}\n"
+            f"  Messungen: {self.measurements_count}\n"
+            f"  Dateien:   {self.measurement_files}\n"
+        )
+
     def __str__(self) -> str:
-        return f"Sensor: '{self.name}' in '{self.path}' with {self.measurements_count} measurements"
+        return f"Sensor: '{self.name}' mit {self.measurements_count} Messungen"
+
+    def __getattr__(self, name: str) -> Any:
+        """
+        Hebt Methodenaufrufe automatisch auf alle Measurement-Instanzen hoch.
+        Rückgabewerte werden nur weitergegeben, wenn sie nicht None sind.
+        """
+        if hasattr(Measurement, name) and callable(getattr(Measurement, name)):
+            def _batch(*args: Any, **kwargs: Any) -> Optional[List[Any]]:
+                results: List[Any] = []
+                any_value = False
+                for m in self.measurements:
+                    res = getattr(m, name)(*args, **kwargs)
+                    if res is not None:
+                        any_value = True
+                        results.append(res)
+                return results if any_value else None
+
+            return _batch
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     @property
     def df_list(self) -> List[pd.DataFrame]:
+        """
+        DataFrames aller Messungen als Liste.
+        """
         if self._df_list is None:
-            self._df_list = [measurement.df for measurement in self.measurements]
+            self._df_list = [m.df for m in self.measurements]
         return self._df_list
 
     @property
     def df(self) -> pd.DataFrame:
+        """
+        Kombinierter DataFrame aller Messungen.
+        """
         if self._df is None:
             try:
                 self._df = pd.concat(self.df_list, ignore_index=True)
             except Exception as e:
-                logger.error(f"{self} failed to concatenate dataframes. Error: {e}")
+                logger.error(f"Sensor '{self.name}': df concat failed: {e}")
                 raise
         return self._df
 
     @df.setter
-    def df(self, df: pd.DataFrame):
+    def df(self, df: pd.DataFrame) -> None:
+        """
+        Setzt den kombinierten DataFrame manuell.
+        """
         self._df = df
 
     @property
     def metadata_df(self) -> pd.DataFrame:
         """
-        Property that returns a DataFrame containing metadata of all measurements.
-
-        Returns
-        -------
-        pd.DataFrame containing metadata of all measurements
+        DataFrame mit Metadaten aller Messungen.
         """
-        try:
-            if self._metadata_df is None:
-                metadata_list = [measurement.full_metadata for measurement in self.measurements]
-                self._metadata_df = pd.DataFrame.from_records(metadata_list)
-
-        except Exception as e:
-            logger.error(f"Failed to create metadata DataFrame for sensor: '{self.name}'. Error: {e}")
-            self._metadata_df = pd.DataFrame()
-
+        if self._metadata_df is None:
+            records = [m.full_metadata for m in self.measurements]
+            self._metadata_df = pd.DataFrame.from_records(records)
         return self._metadata_df
 
     @metadata_df.setter
-    def metadata_df(self, df: pd.DataFrame):
+    def metadata_df(self, df: pd.DataFrame) -> None:
+        """
+        Setzt den Metadaten-DataFrame manuell.
+        """
         self._metadata_df = df
-
-    def plot_force_vs_time(self):
-        """
-        Plots the measurements.
-
-        Parameters
-        ----------
-        sensor
-        """
-        for measurement in self.measurements:
-            measurement.plot_force_vs_time()
-
-    def plot_force_vs_time_with_max_and_release(self):
-        """
-        Plots the measurements.
-
-        Parameters
-        ----------
-        sensor
-        """
-        for measurement in self.measurements:
-            measurement.plot_force_vs_time_with_max_and_release()
