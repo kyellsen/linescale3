@@ -55,7 +55,9 @@ class Measurement(BaseClass):
         self._metadata: Dict = {}
         self._time_metadata: Dict = {}
         self._force_metadata: Dict = {}
+        self._force_integral: Optional[Dict[str, float]] = None
         self._full_metadata: Dict = {}
+
 
     def __str__(self):
         return f"Measurement(id: '{self.measurement_id}', name: '{self.measurement_name}', sensor_id: '{self.sensor_id}')"
@@ -212,6 +214,10 @@ class Measurement(BaseClass):
             # special for Plesse project
             if 'release' in attributes:
                 self._force_metadata['release'] = self.get_release_force()
+            # neu: nur wenn calculate_force_integral vorher aufgerufen wurde
+            if self._force_integral is not None:
+                # wir fügen alle Schlüssel/Werte aus _force_integral hinzu
+                self._force_metadata.update(self._force_integral)
 
         except Exception as e:
             logger.error(f"Failed to retrieve force metadata for measurement: '{self.measurement_name}'. Error: {e}")
@@ -229,7 +235,12 @@ class Measurement(BaseClass):
             Dictionary containing full metadata
         """
         try:
-            self._full_metadata = {**self.metadata, **self.time_metadata, **self.force_metadata}
+            # bestehende Metadaten
+            self._full_metadata = {
+                **self.metadata,
+                **self.time_metadata,
+                **self.force_metadata
+            }
         except Exception as e:
             logger.error(f"Failed to retrieve full metadata for measurement: '{self.measurement_name}'. Error: {e}")
 
@@ -318,3 +329,72 @@ class Measurement(BaseClass):
         except Exception as e:
             logger.error(f"Failed to calculate release force for measurement: '{self.measurement_name}'. Error: {e}")
             return None
+
+    def calculate_force_integral(
+            self,
+            last_frac: float = 0.20, plot=True
+    ) -> None:
+        """
+        Berechnet das zeitliche Integral der Kraftmesswerte (nur positiv) und speichert die Ergebnisse.
+
+        Dabei wird zunächst ein Intercept als Mittelwert der letzten `last_frac` Anteile der Werte
+        bestimmt und von allen Messwerten abgezogen. Negative Werte werden auf Null gesetzt.
+
+        Parameters
+        ----------
+        last_frac : float, optional
+            Anteil der letzten Datenpunkte zur Berechnung des Intercepts. Muss im Bereich (0, 1]
+            liegen. Standard ist 0.20 (20 %).
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            Wenn `last_frac` nicht im Bereich (0, 1] liegt.
+        """
+        # 1) Validierung
+        if not (0 < last_frac <= 1):
+            raise ValueError("last_frac must be in (0, 1]")
+
+        # 2) DataFrame und Zeitintervall (sampling_interval) bestimmen
+        df = self.df.copy()  # stellt sicher, dass df existiert
+        sampling_interval = 1.0 / self.speed * self.timing_correction_factor
+
+        # 3) Intercept aus letzten last_frac Werten
+        values = df['force'].to_numpy()
+        n = len(values)
+        n_last = max(1, int(n * last_frac))
+        intercept = values[-n_last:].mean()
+
+        # 4) Zentrieren und Negatives auf 0 setzen
+        centered = values - intercept
+        centered = np.clip(centered, a_min=0, a_max=None)
+
+        df['force_cent'] = centered
+
+        # 5) Integral berechnen
+        integral = centered.sum() * sampling_interval
+
+        # 6) Ergebnisse speichern (optionales Attribut)
+        self._force_integral = {
+            'intercept': intercept,
+            'sampling_interval': sampling_interval,
+            'integral': integral,
+            'unit': f"{self.unit}·s"
+        }
+        logger.info(
+            f"calculate_force_integral erfolgreich: intercept={intercept:.3f}, integral={integral:.3f} {self.unit}·s"
+        )
+
+        if plot:
+            fig = plot_measurement.plot_force_integral(
+                df=df,
+                sensor_id=self.sensor_id,
+                measurement_id=self.measurement_id,
+                integral_results=self._force_integral
+            )
+            filename = slugify(f"force_int_{self.sensor_id}_ID_{self.measurement_id}")
+            self.PLOT_MANAGER.save_plot(fig, filename, subdir="force_integrals")

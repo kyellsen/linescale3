@@ -31,7 +31,7 @@ class Config(CoreConfig):
         self.metadata_cols = ['measurement_name', 'sensor_id', 'datetime', 'measurement_id', 'unit', 'mode', 'rel_zero',
                               'speed', 'trig', 'stop', 'pre', 'catch', 'total', 'timing_correction_factor']
         self.time_metadata_cols = ['datetime_start', 'datetime_end', 'duration', 'length']
-        self.force_metadata_cols = ['max', 'mean', 'median', 'min', 'release']
+        self.force_metadata_cols = ['max', 'mean', 'median', 'min', 'release', 'integral']
 
         # Path to label dictionary
         self.label_dict_path = Path(__file__).parent / "ls3_data_dict.json"
