@@ -2,13 +2,10 @@ from pathlib import Path
 from typing import Dict, Union, Optional, Tuple
 import numpy as np
 import pandas as pd
-
 from slugify import slugify
 
 from .base_class import BaseClass
-
 from ..plotting import plot_measurement
-
 from kj_logger import get_logger
 
 logger = get_logger(__name__)
@@ -21,24 +18,38 @@ class Measurement(BaseClass):
     Methods
     -------
     read_csv(measurement_name: str, csv_file: Path):
-        Reads a measurement from a csv file and returns a Measurement instance.
+        Reads a measurement from a CSV file and returns a Measurement instance.
     get_measurement_df():
-        Returns a dataframe representing the measurement.
+        Returns a DataFrame representing the measurement.
     force_vs_time(path_plots: str, dpi: int):
         Plots the measurement.
     """
 
-    def __init__(self, measurement_name: str, sensor_id: str, date: str, time: str, measurement_id: int, unit: str,
-                 mode: str, rel_zero: str, speed: int, trig: float, stop: float, pre: int, catch: int, total: int,
-                 force: np.array):
+    def __init__(
+        self,
+        measurement_name: str,
+        sensor_id: str,
+        date: str,
+        time: str,
+        measurement_id: int,
+        unit: str,
+        mode: str,
+        rel_zero: str,
+        speed: int,
+        trig: float,
+        stop: float,
+        pre: int,
+        catch: int,
+        total: int,
+        force: np.array
+    ):
         """
-        Constructs all the necessary attributes for the Measurement object.
+        Constructs all necessary attributes for the Measurement object.
         """
         super().__init__()
-
         self.measurement_name = measurement_name
         self.sensor_id = sensor_id
-        self.datetime = pd.to_datetime(date + ' ' + time, format='%d\\%m\\%y %H:%M:%S')
+        self.datetime = pd.to_datetime(f"{date} {time}", format="%d\\%m\\%y %H:%M:%S")
         self.measurement_id = measurement_id
         self.unit = unit
         self.mode = mode
@@ -50,22 +61,25 @@ class Measurement(BaseClass):
         self.catch = catch
         self.total = total
         self.force = force
-        self.timing_correction_factor = 0.9
-        self._df = None
-        self._metadata: Dict = {}
-        self._time_metadata: Dict = {}
-        self._force_metadata: Dict = {}
-        self._force_integral: Optional[Dict[str, float]] = None
-        self._full_metadata: Dict = {}
 
+        self._df: Optional[pd.DataFrame] = None
+        self._force_intercept_edited: float = 0.0
+        self._df_edited: Optional[pd.DataFrame] = None
 
-    def __str__(self):
-        return f"Measurement(id: '{self.measurement_id}', name: '{self.measurement_name}', sensor_id: '{self.sensor_id}')"
+        self._optional_metadata: Dict[str, any] = {}
+
+        # self._force_integral: Optional[Dict[str, float]] = None
+
+    def __str__(self) -> str:
+        return (
+            f"Measurement(id='{self.measurement_id}', "
+            f"name='{self.measurement_name}', sensor_id='{self.sensor_id}')"
+        )
 
     @classmethod
     def read_csv(cls, measurement_name: str, csv_file: Path) -> Optional['Measurement']:
         """
-        Reads a measurement from a csv file and returns a Measurement instance.
+        Reads a measurement from a CSV file and returns a Measurement instance.
         """
         try:
             df = pd.read_csv(csv_file, header=None)
@@ -84,317 +98,357 @@ class Measurement(BaseClass):
             total = int(df.loc[12, 0].split('=')[1])
             force = np.array(df.loc[13:, 0].astype(float))
 
-            measurement = cls(measurement_name, sensor_id, date, time, measurement_id, unit, mode, rel_zero, speed,
-                              trig, stop, pre, catch, total, force)
+            measurement = cls(
+                measurement_name, sensor_id, date, time, measurement_id,
+                unit, mode, rel_zero, speed, trig, stop, pre, catch, total, force
+            )
             logger.info(f"Read CSV for {measurement} successful.")
             return measurement
         except Exception as e:
-            logger.error(f"Failed to read CSV file: '{csv_file}'. Error: {e}")
+            logger.error(f"Failed to read CSV file '{csv_file}': {e}")
             return None
 
     @property
     def df(self) -> pd.DataFrame:
         """
-        Returns a dataframe representing the measurement.
+        Returns a DataFrame representing the measurement.
         """
         if self._df is None:
             try:
-                df = pd.DataFrame({'force': self.force,
-                                   'sensor_id': self.sensor_id,
-                                   'measurement_id': self.measurement_id,
-                                   'unit': self.unit,
-                                   'mode': self.mode,
-                                   'rel_zero': self.rel_zero,
-                                   'speed': self.speed,
-                                   'trig': self.trig,
-                                   'stop': self.stop,
-                                   'pre': self.pre,
-                                   'catch': self.catch,
-                                   'total': self.total,
-                                   'timing_correction_factor': self.timing_correction_factor})
+                df = pd.DataFrame({
+                    'force': self.force,
+                    'sensor_id': self.sensor_id,
+                    'measurement_id': self.measurement_id,
+                    'unit': self.unit,
+                    'mode': self.mode,
+                    'rel_zero': self.rel_zero,
+                    'speed': self.speed,
+                    'trig': self.trig,
+                    'stop': self.stop,
+                    'pre': self.pre,
+                    'catch': self.catch,
+                    'total': self.total
+                })
                 df.insert(0, "id", df.index)
-                df.insert(1, "datetime",
-                          self.datetime + pd.to_timedelta(df.index / self.speed * self.timing_correction_factor,
-                                                          unit='s'))
-                df.insert(2, "sec_since_start", (df['datetime'] - self.datetime).dt.total_seconds().astype(float))
+                df.insert(
+                    1, "datetime",
+                    self.datetime + pd.to_timedelta(df.index / self.speed, unit='s')
+                )
+                df.insert(
+                    2, "sec_since_start",
+                    (df['datetime'] - self.datetime).dt.total_seconds().astype(float)
+                )
 
                 self._df = df[self.CONFIG.df_cols]
             except Exception as e:
-                logger.error(f"Failed to create dataframe for measurement: '{self.measurement_name}'. Error: {e}")
+                logger.error(f"Failed to create dataframe for measurement '{self.measurement_name}': {e}")
         return self._df
-
-    @df.setter
-    def df(self, df: pd.DataFrame):
-        """
-        Setter method for df property.
-
-        Parameters
-        ----------
-        df : pd.Dataframe to be set as df property
-        """
-        try:
-            self._df = df
-        except Exception as e:
-            logger.error(f"Failed to set dataframe for measurement: '{self.measurement_name}'. Error: {e}")
 
     @property
     def metadata(self) -> Dict[str, Union[str, int, float]]:
         """
-        Property that returns the metadata of the Measurement instance.
-
-        Returns
-        -------
-        Dict[str, Union[str, int, float]]
-            Dictionary containing metadata
+        Returns the metadata of this Measurement instance.
         """
+        md: Dict[str, Union[str, int, float]] = {}
         try:
-            attributes = self.CONFIG.metadata_cols
-
-            for attr in attributes:
-                if hasattr(self, attr):
-                    self._metadata[attr] = getattr(self, attr)
-
+            for key in self.CONFIG.metadata_cols:
+                if hasattr(self, key):
+                    md[key] = getattr(self, key)
         except Exception as e:
-            logger.error(f"Failed to retrieve metadata for measurement: '{self.measurement_name}'. Error: {e}")
-
-        return self._metadata
+            logger.error(f"Failed to retrieve metadata for measurement '{self.measurement_name}': {e}")
+        return md
 
     @property
     def time_metadata(self) -> Dict[str, Union[str, int, float]]:
         """
-        Property that returns the time metadata of the Measurement instance.
-
-        Returns
-        -------
-        Dict[str, Union[str, int, float]]
-            Dictionary containing time metadata
+        Returns the time-related metadata of this Measurement instance.
         """
+        md: Dict[str, Union[str, int, float]] = {}
         try:
-            attributes = self.CONFIG.time_metadata_cols
-
-            if 'datetime_start' in attributes:
-                self._time_metadata['datetime_start'] = self.df.datetime.min()
-            if 'datetime_end' in attributes:
-                self._time_metadata['datetime_end'] = self.df.datetime.max()
-            if 'duration' in attributes:
+            cols = self.CONFIG.time_metadata_cols
+            if 'datetime_start' in cols:
+                md['datetime_start'] = self.df.datetime.min()
+            if 'datetime_end' in cols:
+                md['datetime_end'] = self.df.datetime.max()
+            if 'duration' in cols:
                 start = self.df.datetime.min()
                 end = self.df.datetime.max()
-                self._time_metadata['duration'] = (end - start).total_seconds()
-            if 'length' in attributes:
-                self._time_metadata['length'] = len(self.df)
-
+                md['duration'] = (end - start).total_seconds()
+            if 'length' in cols:
+                md['length'] = len(self.df)
         except Exception as e:
-            logger.error(f"Failed to retrieve time metadata for measurement: '{self.measurement_name}'. Error: {e}")
-
-        return self._time_metadata
+            logger.error(f"Failed to retrieve time metadata for measurement '{self.measurement_name}': {e}")
+        return md
 
     @property
-    def force_metadata(self) -> Dict[str, float]:
+    def force_metadata(self) -> Dict[str, Union[int, float]]:
         """
-        Property that returns the force metadata of the Measurement instance.
-
-        Returns
-        -------
-        Dict[str, float]
-            Dictionary containing force metadata
+        Provides the force statistics specified in CONFIG.force_metadata_cols.
+        Possible keys are:
+          - 'max_index', 'max_force'
+          - 'min_index', 'min_force'
+          - 'mean', 'median'
         """
-        try:
-            attributes = self.CONFIG.force_metadata_cols
+        md: Dict[str, Union[int, float]] = {}
+        cols = self.CONFIG.force_metadata_cols
 
-            if 'max' in attributes:
-                max_index = np.argmax(self.force)
-                self._force_metadata['max'] = (max_index, self.force[max_index])
-            if 'mean' in attributes:
-                self._force_metadata['mean'] = np.mean(self.force)
-            if 'median' in attributes:
-                self._force_metadata['median'] = np.median(self.force)
-            if 'min' in attributes:
-                min_index = np.argmin(self.force)
-                self._force_metadata['min'] = (min_index, self.force[min_index])
-            # special for Plesse project
-            if 'release' in attributes:
-                self._force_metadata['release'] = self.get_release_force()
-            # neu: nur wenn calculate_force_integral vorher aufgerufen wurde
-            if self._force_integral is not None:
-                # wir fügen alle Schlüssel/Werte aus _force_integral hinzu
-                self._force_metadata.update(self._force_integral)
+        # Max index and value
+        if 'max_index' in cols or 'max_force' in cols:
+            idx_max = int(np.argmax(self.force))
+            if 'max_index' in cols:
+                md['max_index'] = idx_max
+            if 'max_force' in cols:
+                md['max_force'] = float(self.force[idx_max])
 
-        except Exception as e:
-            logger.error(f"Failed to retrieve force metadata for measurement: '{self.measurement_name}'. Error: {e}")
+        # Min index and value
+        if 'min_index' in cols or 'min_force' in cols:
+            idx_min = int(np.argmin(self.force))
+            if 'min_index' in cols:
+                md['min_index'] = idx_min
+            if 'min_force' in cols:
+                md['min_force'] = float(self.force[idx_min])
 
-        return self._force_metadata
+        # Mean & median
+        if 'mean' in cols:
+            md['mean'] = float(np.mean(self.force))
+        if 'median' in cols:
+            md['median'] = float(np.median(self.force))
+
+        return md
+
+    @property
+    def optional_metadata(self) -> Dict[str, Union[int, float]]:
+        """
+        Returns any optional metadata entries (e.g. 'release')
+        stored in self._optional_metadata and listed in CONFIG.optional_metadata_cols.
+        """
+        cols = set(self.CONFIG.optional_metadata_cols)
+        md = {k: v for k, v in self._optional_metadata.items() if k in cols}
+        if 'force_intercept_edited' in cols:
+            md['intercept'] = self._force_intercept_edited
+        return md
 
     @property
     def full_metadata(self) -> Dict[str, Union[str, int, float]]:
         """
-        Property that returns the full metadata of the Measurement instance.
+        Returns the full metadata of this Measurement instance,
+        combining standard, time-based, force-based, and optional entries.
+        """
+        try:
+            return {
+                **self.metadata,
+                **self.time_metadata,
+                **self.force_metadata,
+                **self.optional_metadata
+            }
+        except Exception as e:
+            logger.error(f"Failed to retrieve full metadata for measurement '{self.measurement_name}': {e}")
+
+    @property
+    def df_edited(self) -> pd.DataFrame:
+        """
+        Returns the edited DataFrame – on first access it is created
+        as a copy of `self.df` and cached.
+        """
+        if self._df_edited is None:
+            self._df_edited = self.df.copy()
+        return self._df_edited
+
+    @df_edited.setter
+    def df_edited(self, df: pd.DataFrame) -> None:
+        """
+        Sets the edited DataFrame. Verifies that all required columns
+        from CONFIG.df_cols are present.
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("df_edited must be a pandas DataFrame")
+        missing = set(self.CONFIG.df_cols) - set(df.columns)
+        if missing:
+            raise ValueError(f"df_edited is missing columns: {sorted(missing)}")
+        self._df_edited = df
+
+    def apply_force_intercept(self, intercept: float) -> None:
+        """
+        Subtracts a manual intercept (in kN) from the force column
+        in `df_edited` and stores the result in a new column 'force_cent'
+        (negative values clipped to zero). If `df_edited` does not exist,
+        it is created as a copy of `df`.
+        """
+        try:
+            # lazy initialization
+            df = self.df_edited
+            # save intercept
+            self._force_intercept_edited = float(intercept)
+            # center + clip
+            df['force_cent'] = (df['force'] - self._force_intercept_edited).clip(lower=0)
+            # reset (revalidates columns)
+            self.df_edited = df
+
+            logger.info(
+                f"apply_force_intercept successful for measurement '{self.measurement_name}': "
+                f"intercept={self._force_intercept_edited:.3f}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to apply force intercept for measurement '{self.measurement_name}': {e}"
+            )
+
+    def auto_calculate_force_intercept(
+        self,
+        *,
+        time_window: Optional[Tuple[float, float]] = None,
+        index_window: Optional[Tuple[float, float]] = None,
+        method: str = "mean"
+    ) -> float:
+        """
+        Automatically determines an intercept value from the original force signal
+        and applies it via `apply_force_intercept` to `df_edited`.
+
+        Either specify `time_window=(t0, t1)` in seconds OR
+        `index_window=(p_start, p_end)` as a fraction [0,1] of the data length.
+
+        Parameters
+        ----------
+        time_window : optional
+            (t0, t1) in seconds.
+        index_window : optional
+            (p_start, p_end) as fraction of the total number of rows (0 ≤ p_start < p_end ≤ 1).
+        method : {"mean","median"}, default "mean"
+            Statistical measure to use for the intercept.
 
         Returns
         -------
-        Dict[str, Union[str, int, float]]
-            Dictionary containing full metadata
+        float
+            The calculated intercept.
+        """
+        if time_window is not None and index_window is not None:
+            raise ValueError("Specify only one of `time_window` or `index_window`, not both.")
+        if method not in ("mean", "median"):
+            raise ValueError(f"Unknown method '{method}'; only 'mean' or 'median' allowed.")
+
+        df = self.df  # original data
+
+        # 1) Selection window
+        if time_window is not None:
+            t0, t1 = time_window
+            df_sel = df[(df["sec_since_start"] >= t0) & (df["sec_since_start"] <= t1)]
+        elif index_window is not None:
+            p0, p1 = index_window
+            if not (0 <= p0 < p1 <= 1):
+                raise ValueError("Values in `index_window` must satisfy 0 ≤ p_start < p_end ≤ 1.")
+            n = len(df)
+            start_idx = int(n * p0)
+            end_idx = int(n * p1)
+            df_sel = df.iloc[start_idx:end_idx]
+            logger.debug(f"Index window slicing: n={n}, start_idx={start_idx}, end_idx={end_idx}, rows={len(df_sel)}")
+        else:
+            # no restriction → entire series
+            df_sel = df
+
+        if df_sel.empty:
+            raise ValueError("No data available in the specified window.")
+
+        # 2) Calculate intercept
+        intercept = float(getattr(df_sel["force"], method)())
+
+        # 3) Apply to df_edited
+        self.apply_force_intercept(intercept)
+        return intercept
+
+    def calculate_force_integral(self) -> None:
+        """
+        Calculates the time integral of the force measurements (only positive values)
+        and stores the result in optional metadata.
+        """
+        df = self.df_edited
+        integral = df['force_cent'].sum() * (1.0 / self.speed)
+
+        # store directly in optional_metadata
+        self._optional_metadata.update({
+            'integral': integral,
+            'integral_unit': f"{self.unit}·s"
+        })
+        logger.info(f"calculate_force_integral successful: integral={integral:.3f} {self.unit}·s")
+
+    def calculate_release_force(
+        self,
+        min_force: float = 1,
+        window_sec: int = 5,
+        distance_to_end_sec: int = 3
+    ) -> Optional[float]:
+        """
+        Calculates the mean release force from the force data within a specified
+        time window before the end of the measurement.
+
+        Parameters
+        ----------
+        min_force : float, optional
+            Minimum force threshold (default 1).
+        window_sec : int, optional
+            Duration of the averaging window in seconds (default 5).
+        distance_to_end_sec : int, optional
+            Seconds from the end to start of the window (default 3).
+
+        Returns
+        -------
+        Optional[float]
+            The mean release force, or None if calculation fails.
         """
         try:
-            # bestehende Metadaten
-            self._full_metadata = {
-                **self.metadata,
-                **self.time_metadata,
-                **self.force_metadata
-            }
-        except Exception as e:
-            logger.error(f"Failed to retrieve full metadata for measurement: '{self.measurement_name}'. Error: {e}")
+            force = self.df['force']
+            window = self.speed * window_sec
+            distance = self.speed * distance_to_end_sec
 
-        return self._full_metadata
+            f = force[force > min_force].copy()
+            f = f.iloc[-(window + distance):-distance]
+            release = float(f.mean())
+
+            self._optional_metadata['release'] = release
+            logger.info(f"calculate_release_force successful: release={release:.3f} {self.unit}")
+            return release
+        except Exception as e:
+            logger.error(f"Failed to calculate release force for measurement '{self.measurement_name}': {e}")
+            return None
 
     def plot_force_vs_time(self):
         """
-        Method to plot force vs time with optional max force marker.
+        Plots force vs time with optional max and release markers.
         """
         try:
             fig = plot_measurement.plot_force_vs_time(
                 df=self.df,
                 sensor_id=self.sensor_id,
                 measurement_id=self.measurement_id,
-                force_max=self.force_metadata.get("max")  # optional
+                max_index=self.force_metadata.get("max_index"),
+                max_force=self.force_metadata.get("max_force"),
+                release=self.optional_metadata.get('release')
             )
             self.PLOT_MANAGER.save_plot(
                 fig,
                 filename=slugify(f"f_vs_t_{self.sensor_id}_ID_{self.measurement_id}", separator="_"),
                 subdir="force_vs_time"
             )
-
-            logger.info(f"plot_force_vs_time for measurement: '{self}'.")
+            logger.info(f"plot_force_vs_time for measurement '{self}'.")
         except Exception as e:
-            logger.error(f"Failed to plot_force_vs_time: '{self}'. Error: {e}")
+            logger.error(f"Failed to plot_force_vs_time for measurement '{self}': {e}")
 
-    def plot_force_vs_time_with_max_and_release(self):
+    def plot_force_integral(self) -> None:
         """
-        Method to plot force vs time with maximum and release force.
+        Creates and saves the integral plot (raw data + force_cent).
         """
+        # ensure that integral has been calculated
+        if 'integral' not in self._optional_metadata:
+            raise RuntimeError("Call calculate_force_integral() before plotting.")
         try:
-            fig = plot_measurement.plot_force_vs_time(
-                df=self.df,
-                sensor_id=self.sensor_id,
-                measurement_id=self.measurement_id,
-                force_max=self.force_metadata.get("max"),
-                release=self.force_metadata.get("release")
-            )
-
-            self.PLOT_MANAGER.save_plot(
-                fig,
-                filename=slugify(f"f_vs_t_{self.sensor_id}_ID_{self.measurement_id}", separator="_"),
-                subdir="force_vs_time_with_max_and_release"
-            )
-
-            logger.info(f"plot_force_vs_time_with_max_and_release for measurement: '{self}'.")
-        except Exception as e:
-            logger.error(f"Failed to plot_force_vs_time_with_max_and_release for measurement: '{self}'. Error: {e}")
-
-    def get_release_force(self, min_force: float = 1, window_sec: int = 5, distance_to_end_sec: int = 3) -> Optional[float]:
-        """
-        Calculate the mean release force from the force data and provide the window for plotting.
-
-        This method identifies and calculates the average release force
-        within a specified time window before the end of the measurement.
-
-        Parameters
-        ----------
-        min_force : float, optional
-            The minimum force threshold to be considered (default is 1).
-        window_sec : int, optional
-            The duration of the time window in seconds within which the force
-            is averaged (default is 5 seconds).
-        distance_to_end_sec : int, optional
-            The duration in seconds from the end of the measurement to
-            the start of the averaging window (default is 3 seconds).
-
-        Returns
-        -------
-        Optional[float]
-
-        Raises
-        ------
-        Exception
-            If the calculation of the release force fails, an error message is logged and None is returned.
-        """
-        try:
-            force = self.df.force
-            window = self.speed * window_sec
-            distance = self.speed * distance_to_end_sec
-
-            f = force[force > min_force].copy()
-            f = f.iloc[-(window + distance):-distance]
-            release_force = f.mean()
-            return release_force
-        except Exception as e:
-            logger.error(f"Failed to calculate release force for measurement: '{self.measurement_name}'. Error: {e}")
-            return None
-
-    def calculate_force_integral(
-            self,
-            last_frac: float = 0.20, plot=True
-    ) -> None:
-        """
-        Berechnet das zeitliche Integral der Kraftmesswerte (nur positiv) und speichert die Ergebnisse.
-
-        Dabei wird zunächst ein Intercept als Mittelwert der letzten `last_frac` Anteile der Werte
-        bestimmt und von allen Messwerten abgezogen. Negative Werte werden auf Null gesetzt.
-
-        Parameters
-        ----------
-        last_frac : float, optional
-            Anteil der letzten Datenpunkte zur Berechnung des Intercepts. Muss im Bereich (0, 1]
-            liegen. Standard ist 0.20 (20 %).
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValueError
-            Wenn `last_frac` nicht im Bereich (0, 1] liegt.
-        """
-        # 1) Validierung
-        if not (0 < last_frac <= 1):
-            raise ValueError("last_frac must be in (0, 1]")
-
-        # 2) DataFrame und Zeitintervall (sampling_interval) bestimmen
-        df = self.df.copy()  # stellt sicher, dass df existiert
-        sampling_interval = 1.0 / self.speed * self.timing_correction_factor
-
-        # 3) Intercept aus letzten last_frac Werten
-        values = df['force'].to_numpy()
-        n = len(values)
-        n_last = max(1, int(n * last_frac))
-        intercept = values[-n_last:].mean()
-
-        # 4) Zentrieren und Negatives auf 0 setzen
-        centered = values - intercept
-        centered = np.clip(centered, a_min=0, a_max=None)
-
-        df['force_cent'] = centered
-
-        # 5) Integral berechnen
-        integral = centered.sum() * sampling_interval
-
-        # 6) Ergebnisse speichern (optionales Attribut)
-        self._force_integral = {
-            'intercept': intercept,
-            'sampling_interval': sampling_interval,
-            'integral': integral,
-            'unit': f"{self.unit}·s"
-        }
-        logger.info(
-            f"calculate_force_integral erfolgreich: intercept={intercept:.3f}, integral={integral:.3f} {self.unit}·s"
-        )
-
-        if plot:
             fig = plot_measurement.plot_force_integral(
-                df=df,
+                df=self.df_edited,
                 sensor_id=self.sensor_id,
                 measurement_id=self.measurement_id,
-                integral_results=self._force_integral
+                integral=self._optional_metadata['integral'],
+                integral_unit=self._optional_metadata['integral_unit']
             )
             filename = slugify(f"force_int_{self.sensor_id}_ID_{self.measurement_id}")
             self.PLOT_MANAGER.save_plot(fig, filename, subdir="force_integrals")
+            logger.info(f"plot_force_integral for measurement '{self}'.")
+        except Exception as e:
+            logger.error(f"Failed to plot_force_integral for measurement '{self}': {e}")

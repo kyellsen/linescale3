@@ -79,14 +79,6 @@
         "Einheit": "s",
         "Beschreibung": "Dauer der Datenerfassung nach Trigger"
     },
-    "timing_correction_factor": {
-        "Kategorie": "ls3",
-        "Zeichen": "$t_{\\mathrm{corr}}$",
-        "Deutsch": "Zeitkorrekturfaktor",
-        "Datentyp": "float64",
-        "Einheit": "-",
-        "Beschreibung": "Korrekturfaktor für Zeit- und Dauerangaben (z. B. 0.9)"
-    },
     "duration": {
         "Kategorie": "ls3",
         "Zeichen": "$\\Delta t$",
@@ -127,6 +119,14 @@
         "Einheit": "kN",
         "Beschreibung": "Tatsächlich realisierte Vorspannkraft im Zugseil bei Release"
     },
+    "integral": {
+        "Kategorie": "ls3",
+        "Zeichen": "$\\int F\\,dt$",
+        "Deutsch": "Kraftintegral",
+        "Datentyp": "float",
+        "Einheit": "kN·s",
+        "Beschreibung": "Zeitliches Integral der Kraft (Fläche unter der Kraft-Zeit-Kurve)"
+    },
     "datetime_start": {
         "Kategorie": "ls3",
         "Zeichen": "$t_{\\mathrm{start}}$",
@@ -143,21 +143,37 @@
         "Einheit": "-",
         "Beschreibung": "Berechneter Endzeitpunkt der Messung"
     },
-    "max": {
+    "max_index": {
+        "Kategorie": "ls3",
+        "Zeichen": "idx($F_{\\mathrm{max}}$)",
+        "Deutsch": "Index der maximalen Kraft",
+        "Datentyp": "int",
+        "Einheit": "",
+        "Beschreibung": "Index (Zeitpunkt) des maximalen Kraftwertes"
+    },
+    "max_force": {
         "Kategorie": "ls3",
         "Zeichen": "$F_{\\mathrm{max}}$",
-        "Deutsch": "Kraftmaximum",
-        "Datentyp": "object",
+        "Deutsch": "Maximale Kraft",
+        "Datentyp": "float",
         "Einheit": "kN",
-        "Beschreibung": "Index und Wert der maximalen Kraft"
+        "Beschreibung": "Maximale Kraftspitze"
     },
-    "min": {
+    "min_index": {
+        "Kategorie": "ls3",
+        "Zeichen": "idx($F_{\\mathrm{min}}$)",
+        "Deutsch": "Index der minimalen Kraft",
+        "Datentyp": "int",
+        "Einheit": "",
+        "Beschreibung": "Index (Zeitpunkt) des minimalen Kraftwertes"
+    },
+    "min_force": {
         "Kategorie": "ls3",
         "Zeichen": "$F_{\\mathrm{min}}$",
-        "Deutsch": "Kraftminimum",
-        "Datentyp": "object",
+        "Deutsch": "Minimale Kraft",
+        "Datentyp": "float",
         "Einheit": "kN",
-        "Beschreibung": "Index und Wert der minimalen Kraft"
+        "Beschreibung": "Minimaler Kraftwert"
     },
     "rel_zero": {
         "Kategorie": "ls3",

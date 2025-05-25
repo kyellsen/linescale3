@@ -136,9 +136,9 @@ class Sensor(BaseClass):
             self._metadata_df = pd.DataFrame.from_records(records)
         return self._metadata_df
 
-    @metadata_df.setter
-    def metadata_df(self, df: pd.DataFrame) -> None:
-        """
-        Setzt den Metadaten-DataFrame manuell.
-        """
-        self._metadata_df = df
+    # @metadata_df.setter
+    # def metadata_df(self, df: pd.DataFrame) -> None:
+    #     """
+    #     Setzt den Metadaten-DataFrame manuell.
+    #     """
+    #     self._metadata_df = df

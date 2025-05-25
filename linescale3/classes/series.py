@@ -8,8 +8,8 @@ from .sensor import Sensor
 from kj_logger import get_logger
 logger = get_logger(__name__)
 
-class Series(BaseClass):
 
+class Series(BaseClass):
     """
     Repräsentiert eine Serie von Sensoren und deren Messungen.
 
@@ -125,15 +125,10 @@ class Series(BaseClass):
             self._metadata_df = pd.concat([s.metadata_df for s in self.sensors], ignore_index=True)
         return self._metadata_df
 
-    @metadata_df.setter
-    def metadata_df(self, df: pd.DataFrame) -> None:
-        """
-        Setzt den Metadaten-DataFrame manuell.
-        """
-        self._metadata_df = df
-
     def create_data_dict(self) -> Dict[str, dict]:
         """
-        Lädt das Label-Lexikon aus der Konfiguration neu.
+        Loads the label dictionary from the configuration.
         """
         return self.CONFIG.load_label_dict()
+
+
