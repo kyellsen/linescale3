@@ -391,8 +391,12 @@ class Measurement(BaseClass):
 
         Returns
         -------
-        Optional[float]
-            The mean release force, or None if calculation fails.
+        float
+            Mean release force.
+        Raises
+        ------
+        ValueError
+            If the selected window contains no data.
         """
         try:
             force = self.df['force']
@@ -401,14 +405,25 @@ class Measurement(BaseClass):
 
             f = force[force > min_force].copy()
             f = f.iloc[-(window + distance):-distance]
+
+            if f.empty:
+                raise ValueError(
+                    f"No force values in the specified window: "
+                    f"min_force={min_force}, window_sec={window_sec}, "
+                    f"distance_to_end_sec={distance_to_end_sec}"
+                )
+
             release = float(f.mean())
 
             self._optional_metadata['release'] = release
             logger.info(f"calculate_release_force successful: release={release:.3f} {self.unit}")
             return release
         except Exception as e:
-            logger.error(f"Failed to calculate release force for measurement '{self.measurement_name}': {e}")
-            return None
+            logger.error(
+                f"Failed to calculate release force for measurement "
+                f"'{self.measurement_name}': {e}"
+            )
+            raise
 
     def plot_force_vs_time(self):
         """
