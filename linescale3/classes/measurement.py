@@ -371,10 +371,10 @@ class Measurement(BaseClass):
         logger.info(f"calculate_force_integral successful: integral={integral:.3f} {self.unit}·s")
 
     def calculate_release_force(
-        self,
-        min_force: float = 1,
-        window_sec: int = 5,
-        distance_to_end_sec: int = 3
+            self,
+            min_force: float = 1,
+            window_sec: int = 5,
+            distance_to_end_sec: int = 3
     ) -> Optional[float]:
         """
         Calculates the mean release force from the force data within a specified
@@ -391,12 +391,8 @@ class Measurement(BaseClass):
 
         Returns
         -------
-        float
-            Mean release force.
-        Raises
-        ------
-        ValueError
-            If the selected window contains no data.
+        float or None
+            Mean release force if calculation is successful, otherwise None.
         """
         try:
             force = self.df['force']
@@ -407,23 +403,29 @@ class Measurement(BaseClass):
             f = f.iloc[-(window + distance):-distance]
 
             if f.empty:
-                raise ValueError(
+                logger.error(
                     f"No force values in the specified window: "
                     f"min_force={min_force}, window_sec={window_sec}, "
-                    f"distance_to_end_sec={distance_to_end_sec}"
+                    f"distance_to_end_sec={distance_to_end_sec}, "
+                    f"Object={self.__str__()}"
                 )
+                return None
 
             release = float(f.mean())
-
             self._optional_metadata['release'] = release
-            logger.info(f"calculate_release_force successful: release={release:.3f} {self.unit}")
+
+            logger.info(
+                f"calculate_release_force successful: "
+                f"release={release:.3f} {self.unit}"
+            )
             return release
+
         except Exception as e:
             logger.error(
                 f"Failed to calculate release force for measurement "
                 f"'{self.measurement_name}': {e}"
             )
-            raise
+            return None
 
     def plot_force_vs_time(self):
         """
